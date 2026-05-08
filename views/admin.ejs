@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRS Training Bot Admin</title>
+    <link rel="icon" type="image/png" href="/images/crs_icon.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 
+           Setting the font stack: 
+           1. 'Khmer OS Battambang' for Khmer characters.
+           2. 'Arial' as the secondary for English/Latin characters.
+        */
+        @import url('https://fonts.googleapis.com/css2?family=Battambang&display=swap');
+
+        body { 
+            font-family: 'Khmer OS Battambang', 'Battambang', Arial, sans-serif; 
+        }
+        
+        /* Utility for inputs to ensure they inherit the custom font stack */
+        input, select, textarea, button {
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body class="bg-[#eef2f7] text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold text-[#0088cc] text-center mb-8">CRS Training Bot Management</h1>
+
+        <!-- Search All Content -->
+        <div class="relative mb-6">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+            <input type="text" id="searchInput" 
+                   class="w-full pl-10 p-3 border-2 border-[#0088cc] rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-white" 
+                   placeholder="ស្វែងរកប្រភេទ ឬវីដេអូ... (Search categories or videos)" onkeyup="searchContent()">
+        </div>
+
+        <!-- Section 1: Categories -->
+        <div class="bg-white p-6 mb-8 rounded-xl shadow-md border border-gray-100">
+            <h3 id="catFormTitle" class="text-xl font-bold border-b-2 border-gray-100 pb-3 mb-6 flex items-center gap-2">
+                <span class="text-2xl">📂</span> បង្កើតប្រភេទ (Create Category)
+            </h3>
+            
+            <form id="categoryForm" action="/admin/add-category" method="POST" class="space-y-4">
+                <input type="hidden" name="isUpdate" id="catIsUpdate" value="false">
+                <input type="hidden" name="_id" id="catId">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold mb-1 text-sm text-gray-600">Category Key (ID) <span class="text-red-500">*</span> :</label>
+                        <input type="text" name="key" id="catKey" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., crs001_cat_birth" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-sm text-gray-600">អត្ថបទលើប៊ូតុង (Button Text) <span class="text-red-500">*</span> :</label>
+                        <input type="text" name="button_text" id="catButton" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ឧទាហរណ៍៖ 👶 កំណើតរស់" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block font-bold mb-1 text-sm text-gray-600">ចំណងជើង (Title) <span class="text-red-500">*</span> :</label>
+                    <textarea name="title" id="catTitle" rows="6" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="បញ្ចូលចំណងជើង..." required></textarea>
+                </div>
+                
+                <button id="catButtonTitle" type="submit" class="w-full bg-[#0088cc] hover:bg-blue-700 text-white font-bold py-3 rounded-md transition-all active:scale-[0.98]">
+                    រក្សាទុក (Save Category)
+                </button>
+            </form>
+
+            <div class="overflow-x-auto mt-8 border rounded-lg">
+                <table id="categoryTable" class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-gray-600">
+                            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Category Key</th>
+                            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Button Text</th>
+                            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <!-- Replace your current tbody loop with this -->
+<tbody class="divide-y divide-gray-100">
+    <% categories.sort((a, b) => a.key.localeCompare(b.key)).forEach(cat => { %>
+    <tr class="searchable hover:bg-blue-50/50 transition-colors">
+        <td class="p-4 text-sm font-mono text-blue-600"><%= cat.key %></td>
+        <td class="p-4 text-sm"><%= cat.button_text %></td>
+        <td class="p-4 flex gap-2">
+            <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2 px-4 rounded shadow-sm transition-all" 
+                    onclick="editCategory('<%= cat._id %>', '<%= cat.key %>', '<%= cat.button_text %>', `<%= cat.title %>`)">Edit</button>
+            <form id="delete-form-<%= cat._id %>" action="/admin/delete-category" method="POST" class="inline">
+                <input type="hidden" name="_id" value="<%= cat._id %>">
+                <button type="button" 
+                        class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-all" 
+                        onclick="confirmDelete('<%= cat._id %>')">
+                    Delete
+                </button>
+            </form>
+        </td>
+    </tr>
+    <% }) %>
+</tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Videos -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+            <h3 id="vidFormTitle" class="text-xl font-bold border-b-2 border-gray-100 pb-3 mb-6 flex items-center gap-2">
+                <span class="text-2xl">🎥</span> បន្ថែមវីដេអូមេរៀន (Add Lesson Video)
+            </h3>
+            
+            <form id="videoForm" action="/admin/add-video" method="POST" class="space-y-4">
+                <input type="hidden" name="isUpdate" id="vidIsUpdate" value="false">
+                <input type="hidden" name="originalId" id="vidOriginalId">   
+                            
+                <div>
+    <label class="block font-bold mb-1 text-sm text-gray-600">ជ្រើសរើសប្រភេទ (Select Category) <span class="text-red-500">*</span> :</label>
+    
+    <!-- ADD THIS HIDDEN INPUT HERE -->
+    <input type="hidden" name="categoryKey" id="vidCatKeyHidden">
+    
+    <select name="categoryKey" id="vidCatKey" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+        <% categories.forEach(cat => { %>
+            <option value="<%= cat.key %>"><%= cat.button_text %></option>
+        <% }) %>
+    </select>
+</div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold mb-1 text-sm text-gray-600">លេខកូដវីដេអូ (Code Video) <span class="text-red-500">*</span> :</label>
+                        <input type="text" name="id" id="vidId" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., Birth001" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-sm text-gray-600">ចំណងជើងវីដេអូ (Video Title) <span class="text-red-500">*</span> :</label>
+                        <input type="text" name="text" id="vidText" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="បញ្ចូលចំណងជើងជាភាសាខ្មែរ" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block font-bold mb-1 text-sm text-gray-600">តំណភ្ជាប់វីដេអូ (YouTube Link) <span class="text-red-500">*</span> :</label>
+                    <input type="url" name="url" id="vidUrl" class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://youtu.be/..." required>
+                </div>
+                <div>
+        <!-- ORDER FIELD (Hidden by default) -->
+<div id="orderFieldContainer">
+    <label class="block font-bold mb-1 text-sm text-gray-600">
+        លេខរៀង (Order)
+        <span class="text-red-500">*</span> :
+    </label>
+
+    
+    <input 
+    type="number" 
+    name="order" 
+    id="vidOrder"
+    min="1"
+    required
+    value="1"
+    class="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+    placeholder="e.g., 1"
+/>
+</div>
+                <button type="submit" id="vidButtonTitle" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition-all active:scale-[0.98]">
+                    រក្សាទុក (Save Video)
+                </button>
+            </form>
+
+            <div class="overflow-x-auto mt-8 border rounded-lg">
+    <table id="videoTable" class="w-full border-collapse">
+    <thead>
+        <tr class="bg-gray-50 border-b border-gray-200 text-gray-600">
+            <!-- New Order Header -->
+            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider w-16">Order</th>
+            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors" onclick="toggleSort()">
+                Video Range <span id="sortArrow" class="ml-1 text-blue-500">↑</span>
+            </th>
+            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Title</th>
+            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Category</th>
+            <th class="text-left p-4 font-bold text-xs uppercase tracking-wider">Actions</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+        <% categories.forEach(cat => { %>
+            <% if (cat.videos && cat.videos.length > 0) { %>
+                <% cat.videos.forEach(vid => { %>
+                <tr class="searchable hover:bg-green-50/50 transition-colors">
+                    <!-- Order Cell -->
+                    <td class="p-4 text-sm text-gray-500 font-bold">
+                        #<%= vid.order || 0 %>
+                    </td>
+                    
+                    <td class="p-4 text-sm font-mono text-blue-600">
+                        <span class="bg-blue-50 px-2 py-1 rounded border border-blue-100"><%= vid.id %></span>
+                    </td>
+                    
+                    <td class="p-4 text-sm font-medium"><%= vid.text %></td>
+                    
+                    <td class="p-4">
+                        <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
+                            <%= cat.key %>
+                        </span>
+                    </td>
+                    
+                    <td class="p-4 flex gap-2">
+                        <!-- Updated Edit button to include order -->
+                        <!-- <button class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2 px-4 rounded shadow-sm transition-all" 
+                                onclick="editVideo('<%= cat.key %>', '<%= vid.id %>', '<%= vid.text %>', '<%= vid.url %>', '<%= vid.order || 0 %>')">
+                            Edit
+                        </button> -->
+                        <button 
+    type="button"
+    class="bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold py-2 px-4 rounded shadow-sm transition-all" 
+    onclick="editVideo('<%= cat.key %>', '<%= vid.id %>', '<%= vid.text %>', '<%= vid.url %>', '<%= vid.order || 0 %>')">
+    Edit
+</button>
+                        
+                        <form action="/admin/delete-video" method="POST" id="delete-form-<%= vid.id %>" class="inline">
+                            <input type="hidden" name="categoryKey" value="<%= cat.key %>">
+                            <input type="hidden" name="videoId" value="<%= vid.id %>">
+                            <button type="button" onclick="confirmDelete2('<%= vid.id %>')" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-all">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <% }) %>
+            <% } %>
+        <% }) %>
+    </tbody>
+</table>
+</div>
+        </div>
+    </div>
+<!-- Ensure SweetAlert2 is loaded in your header or before this script -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function confirmDelete(key) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'No, keep it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Manually submit the specific form
+            document.getElementById('delete-form-' + key).submit();
+        }
+    });
+}
+function confirmDelete2(videoId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444', // Tailwind's red-500
+        cancelButtonColor: '#6b7280',  // Tailwind's gray-500
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Find the specific form by ID and submit it
+            document.getElementById(`delete-form-${videoId}`).submit();
+        }
+    });
+}
+</script>
+    <script>
+        function searchContent() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let rows = document.querySelectorAll('.searchable');
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.classList.toggle('hidden', !text.includes(input));
+            });
+        }
+
+        function editCategory(_id,key, button, title) {
+            document.getElementById('catFormTitle').innerHTML = "<span class='text-2xl'>📂</span> កែប្រែប្រភេទ (Update Category)";
+            document.getElementById('catButtonTitle').innerHTML = "កែប្រែ (Update Category)";            
+            document.getElementById('catId').value = _id; // Set the hidden _id field for updates
+            document.getElementById('catKey').value = key;
+            document.getElementById('catButton').value = button;
+            document.getElementById('catTitle').value = title;
+            document.getElementById('catIsUpdate').value = "true";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+     
+
+    
+function editVideo(catKey, id, text, url, order) {
+
+    const vidForm = document.getElementById('videoForm');
+
+    document.getElementById('vidFormTitle').innerHTML =
+        "<span class='text-2xl'>🎥</span> កែប្រែវីដេអូមេរៀន (Update Video)";
+
+    document.getElementById('vidButtonTitle').innerHTML =
+        "រក្សាទុកការកែប្រែ (Save Changes)";
+
+    // CATEGORY
+    const select = document.getElementById('vidCatKey');
+    const hiddenCatInput = document.getElementById('vidCatKeyHidden');
+
+    select.value = catKey;
+    select.disabled = true;
+    select.classList.add('bg-gray-100', 'cursor-not-allowed');
+
+    // IMPORTANT
+    hiddenCatInput.value = catKey;
+
+    // VIDEO DATA
+    document.getElementById('vidId').value = id;
+    document.getElementById('vidOriginalId').value = id;
+    document.getElementById('vidText').value = text;
+    document.getElementById('vidUrl').value = url;
+    document.getElementById('vidIsUpdate').value = "true";
+
+    // ORDER
+    document.getElementById('vidOrder').value =
+    (order && order > 0) ? order : 1;
+
+    // SCROLL
+    vidForm.scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+// ENABLE SELECT BEFORE SUBMIT
+document.getElementById("videoForm").addEventListener("submit", function () {
+
+    const select = document.getElementById("vidCatKey");
+
+    if (select.disabled) {
+        select.disabled = false;
+    }
+});
+
+
+        // Variable to track state (start with true for Ascending)
+let isAscending = true;
+
+function sortVideoTable(forceDirection = null) {
+    const table = document.getElementById("videoTable");
+    if (!table) return;
+
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr.searchable"));
+    const arrow = document.getElementById("sortArrow");
+
+    if (forceDirection !== null) isAscending = forceDirection;
+
+    const sortedRows = rows.sort((a, b) => {
+        const idA = a.cells[0].innerText.trim();
+        const idB = b.cells[0].innerText.trim();
+
+        // numeric: true ensures v2 comes before v10
+        return isAscending 
+            ? idA.localeCompare(idB, undefined, { numeric: true })
+            : idB.localeCompare(idA, undefined, { numeric: true });
+    });
+
+    // Update the arrow icon
+    if (arrow) arrow.innerText = isAscending ? "↑" : "↓";
+
+    // Append sorted rows back to the table
+    sortedRows.forEach(row => tbody.appendChild(row));
+}
+
+// Function for the user to click and toggle manually
+function toggleSort() {
+    isAscending = !isAscending;
+    sortVideoTable();
+}
+
+// AUTO SORT ON LOAD
+// Runs as soon as the window finishes loading
+window.addEventListener("DOMContentLoaded", () => {
+    sortVideoTable(true); // Force ascending on load
+});
+    </script>
+</body>
+</html>
