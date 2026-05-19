@@ -312,6 +312,11 @@ function saveMessage(chatId, messageId) {
   sentVideos[chatId].push(messageId);
 }
 
+function leftAlignText(text, targetLength = 40) {
+    if (text.length >= targetLength) return text;
+    // Uses the Braille Blank space character '⠀' because standard spaces ' ' get trimmed by Telegram
+    return text + '⠀'.repeat(targetLength - text.length);
+}
 // Updated: Fetch Main Menu from DB
 async function sendMainMenu(chatId, messageId = null) {
     try {
@@ -319,8 +324,12 @@ async function sendMainMenu(chatId, messageId = null) {
         const text = "សូមស្វាគមន៍មកកាន់ កម្មវិធីស្វ័យសិក្សា CRS 🎓\n\nសូមជ្រើសរើសមេរៀន ៖";
         
         // We prefix the key with "cat:" to identify it in the callback_query
+        // const buttons = categories.map(cat => [{ 
+        //     text: cat.button_text, 
+        //     callback_data: `cat:${cat.key}` 
+        // }]);
         const buttons = categories.map(cat => [{ 
-            text: cat.button_text, 
+            text: leftAlignText(cat.button_text, 70), 
             callback_data: `cat:${cat.key}` 
         }]);
 
@@ -365,7 +374,8 @@ const sortedVideos = videos
 
     const buttons = sortedVideos.map(v => ([
         {
-            text: v.text,
+            // text: v.text,
+            text: leftAlignText(v.text, 80),
             callback_data: `vid:${categoryKey}|${v.id}`
         }
     ]));
