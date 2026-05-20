@@ -335,8 +335,10 @@ async function sendMainMenu(chatId, messageId = null) {
 
         const options = { reply_markup: { 
             inline_keyboard: buttons,
-            // This changes the text inside their chat bar and hints that they shouldn't type
-            input_field_placeholder: "⚠️ សូមប្រើប្រាស់ប៊ូតុងខាងលើ ដើម្បីជ្រើសរើស។"
+           // This section forces a one-row block over the text area so they can't type easily
+                keyboard: [[{ text: "🛑 សូមជ្រើសរើសមេរៀនពីប៊ូតុងខាងលើ" }]], 
+                resize_keyboard: true,
+                is_persistent: true // Keeps it locked on the screen
         } };
 
         if (messageId) {
@@ -395,8 +397,10 @@ const sortedVideos = videos
             message_id: messageId,
             reply_markup: { 
                 inline_keyboard: buttons,
-            // This changes the text inside their chat bar and hints that they shouldn't type
-                input_field_placeholder: "⚠️ សូមប្រើប្រាស់ប៊ូតុងខាងលើ ដើម្បីជ្រើសរើស។"
+            // This section forces a one-row block over the text area so they can't type easily
+                keyboard: [[{ text: "🛑 សូមជ្រើសរើសមេរៀនពីប៊ូតុងខាងលើ" }]], 
+                resize_keyboard: true,
+                is_persistent: true // Keeps it locked on the screen
             }
         }
     ).catch(err =>
