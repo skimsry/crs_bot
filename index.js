@@ -335,10 +335,7 @@ async function sendMainMenu(chatId, messageId = null) {
 
         const options = { reply_markup: { 
             inline_keyboard: buttons,
-           // This section forces a one-row block over the text area so they can't type easily
-                keyboard: [[{ text: "🛑 សូមជ្រើសរើសមេរៀនពីប៊ូតុងខាងលើ" }]], 
-                resize_keyboard: true,
-                is_persistent: true // Keeps it locked on the screen
+            remove_keyboard: true
         } };
 
         if (messageId) {
@@ -396,11 +393,7 @@ const sortedVideos = videos
             chat_id: chatId,
             message_id: messageId,
             reply_markup: { 
-                inline_keyboard: buttons,
-            // This section forces a one-row block over the text area so they can't type easily
-                keyboard: [[{ text: "🛑 សូមជ្រើសរើសមេរៀនពីប៊ូតុងខាងលើ" }]], 
-                resize_keyboard: true,
-                is_persistent: true // Keeps it locked on the screen
+                inline_keyboard: buttons
             }
         }
     ).catch(err =>
@@ -430,6 +423,28 @@ const sortedVideos = videos
 
     if (data === "clear_links") {
         bot.deleteMessage(chatId, messageId).catch(() => {});
+    }
+});
+
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    
+    // Ignore execution commands like /start, otherwise erase manual chatter
+    if (msg.text && !msg.text.startsWith('/')) {
+        try {
+            // Delete the message right away to keep the chat interface clean
+            await bot.deleteMessage(chatId, msg.message_id);
+            
+            // Send a transient flash message reminding them to look up at your CRS course buttons
+            const warningAlert = await bot.sendMessage(chatId, "⚠️ សូមជ្រើសរើសមេរៀនដោយប្រើប្រាស់ប៊ូតុងខាងលើ (Please use the menu buttons above).");
+            
+            // Vaporize the flash message automatically after 3 seconds
+            setTimeout(() => {
+                bot.deleteMessage(chatId, warningAlert.message_id).catch(() => {});
+            }, 3000);
+        } catch (err) {
+            console.log("Input handler warning:", err.message);
+        }
     }
 });
 
