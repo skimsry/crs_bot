@@ -333,7 +333,11 @@ async function sendMainMenu(chatId, messageId = null) {
             callback_data: `cat:${cat.key}` 
         }]);
 
-        const options = { reply_markup: { inline_keyboard: buttons } };
+        const options = { reply_markup: { 
+            inline_keyboard: buttons,
+            // This changes the text inside their chat bar and hints that they shouldn't type
+            input_field_placeholder: "⚠️ សូមប្រើប្រាស់ប៊ូតុងខាងលើ ដើម្បីជ្រើសរើស។"
+        } };
 
         if (messageId) {
             await bot.editMessageText(text, { chat_id: chatId, message_id: messageId, ...options });
@@ -389,7 +393,11 @@ const sortedVideos = videos
         {
             chat_id: chatId,
             message_id: messageId,
-            reply_markup: { inline_keyboard: buttons }
+            reply_markup: { 
+                inline_keyboard: buttons,
+            // This changes the text inside their chat bar and hints that they shouldn't type
+                input_field_placeholder: "⚠️ សូមប្រើប្រាស់ប៊ូតុងខាងលើ ដើម្បីជ្រើសរើស។"
+            }
         }
     ).catch(err =>
         console.log("Edit Error:", err.response?.body || err.message)
